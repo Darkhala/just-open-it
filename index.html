@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday Imbuhira</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      min-width: 100vw;
+      min-height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+    }
+    .glow-text {
+      text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,0,150,0.8);
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body class="relative flex flex-col items-center justify-center text-white text-center">
+  <!-- Background video -->
+  <video autoplay muted loop id="bg-video">
+    <source src="https://cdn.coverr.co/videos/coverr-happy-fireworks-9751/1080p.mp4" type="video/mp4">
+    Your browser does not support HTML5 video.
+  </video>
+
+  <div class="z-20 p-6">
+    <h1 id="mainText" class="text-5xl md:text-7xl font-extrabold glow-text opacity-0">Happy Birthday, Imbuhira 🥳🥳</h1>
+    <p id="poemText" class="mt-6 text-xl md:text-2xl max-w-2xl leading-relaxed opacity-0">
+      You are amazing... If I was a poet, I’d write an anthology about you. But I'm just a pro-grammar😂      <br>
+      If I was Ayonakoji, I’d marry you without hesitation.
+    </p>
+    <button onclick="startFireworks()" class="mt-12 px-8 py-3 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl shadow-lg transition-all duration-300">
+      Click here for Fireworks ✨
+    </button>
+  </div>
+
+
+  <!-- Fireworks Canvas -->
+  <canvas id="fireworks"></canvas>
+
+  <script>
+    // Animate text with GSAP
+    gsap.to("#mainText", { duration: 2, opacity: 1, y: -20 });
+    gsap.to("#poemText", { duration: 2, delay: 1, opacity: 1 });
+
+    // Canvas fireworks effect
+    const canvas = document.getElementById("fireworks");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const fireworks = [];
+
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    class Firework {
+      constructor() {
+        this.x = canvas.width / 2;
+        this.y = canvas.height;
+        this.tx = random(100, canvas.width - 100);
+        this.ty = random(50, canvas.height / 2);
+        this.distance = Math.hypot(this.tx - this.x, this.ty - this.y);
+        this.speed = 4;
+        this.angle = Math.atan2(this.ty - this.y, this.tx - this.x);
+        this.trail = [];
+        this.exploded = false;
+        this.color = `hsl(${Math.floor(Math.random() * 360)}, 100%, 70%)`;
+      }
+
+      update(index) {
+        if (!this.exploded) {
+          const vx = Math.cos(this.angle) * this.speed;
+          const vy = Math.sin(this.angle) * this.speed;
+          this.x += vx;
+          this.y += vy;
+          this.trail.push([this.x, this.y]);
+          if (this.trail.length > 10) this.trail.shift();
+          if (Math.hypot(this.tx - this.x, this.ty - this.y) < 10) {
+            this.exploded = true;
+            explode(this);
+            fireworks.splice(index, 1);
+          }
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        for (let i = this.trail.length - 1; i >= 0; i--) {
+          ctx.lineTo(this.trail[i][0], this.trail[i][1]);
+        }
+        ctx.strokeStyle = this.color;
+        ctx.stroke();
+      }
+    }
+
+    const particles = [];
+
+    function explode(firework) {
+      for (let i = 0; i < 50; i++) {
+        particles.push({
+          x: firework.tx,
+          y: firework.ty,
+          vx: Math.cos((Math.PI * 2 * i) / 50) * random(2, 6),
+          vy: Math.sin((Math.PI * 2 * i) / 50) * random(2, 6),
+          alpha: 1,
+          color: firework.color
+        });
+      }
+    }
+
+    function animate() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        fireworks[i].update(i);
+        fireworks[i].draw();
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.01;
+        if (p.alpha <= 0) particles.splice(i, 1);
+        else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${p.color.match(/\d+/g).join(',')},${p.alpha})`;
+          ctx.fill();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function startFireworks() {
+      setInterval(() => fireworks.push(new Firework()), 500);
+    }
+
+    animate();
+  </script>
+</body>
+</html>
